@@ -23,13 +23,13 @@ name2=path
 """ 
         cfgparser = ConfigParser()
         cfgparser.read_string(example)
-        cfgparser = TrexConfig(cfgparser)
-        self.assertTrue('username1' in cfgparser.users)
-        self.assertEqual(cfgparser.users['username1']['password'], 'salted_password')
-        self.assertTrue('name1' in cfgparser.users['username1']['programs'])
-        self.assertTrue('name2' in cfgparser.users['username1']['programs'])
-        self.assertTrue('name1' in cfgparser.programs)
-        self.assertTrue('name2' in cfgparser.programs)
+        config = TrexConfig(cfgparser)
+        self.assertTrue('username1' in config.users)
+        self.assertEqual(config.users['username1']['password'], 'salted_password')
+        self.assertTrue('name1' in config.users['username1']['programs'])
+        self.assertTrue('name2' in config.users['username1']['programs'])
+        self.assertTrue('name1' in config.programs)
+        self.assertTrue('name2' in config.programs)
 
 if __name__ == "__main__":
     unittest.main()

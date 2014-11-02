@@ -8,9 +8,7 @@ Usage:
 """
 from configparser import ConfigParser
 import logging
-
 from docopt import docopt
-
 from trex import TrexServer, TrexConfig, TrexAuthMgr
 
 
