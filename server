@@ -15,8 +15,11 @@ from trex import TrexServer, TrexConfig, TrexAuthMgr
 
 DEFAULT_LOGFILE = 'server.log'
 DEFAULT_LOGLEVEL = logging.INFO
+DEFAULT_LOGFORMAT = '%(asctime)-15s %(message)s'
 
-logging.basicConfig(filename=DEFAULT_LOGFILE, level=DEFAULT_LOGLEVEL)
+logging.basicConfig(filename=DEFAULT_LOGFILE,
+                    level=DEFAULT_LOGLEVEL,
+                    format=DEFAULT_LOGFORMAT)
 
 if __name__ == '__main__':  
     args = docopt(__doc__)
