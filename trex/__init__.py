@@ -96,16 +96,16 @@ class TrexConfig(object):
     USERS_SECTION = 'users'
     PROGRAMS_SECTION = 'programs'
     
-    def __init__(self, config):
+    def __init__(self, cfgparser):
         self.users = {}
-        for username in config[TrexConfig.USERS_SECTION]:
-            values = config[TrexConfig.USERS_SECTION].get(username)
+        for username in cfgparser[TrexConfig.USERS_SECTION]:
+            values = cfgparser[TrexConfig.USERS_SECTION].get(username)
             password, rest = values.split(',', 1)
             programs = rest.replace(' ','').split(',')
             self.users[username] = {}
             self.users[username]['password'] = password
             self.users[username][TrexConfig.PROGRAMS_SECTION] = programs
-        self.programs = dict(config[TrexConfig.PROGRAMS_SECTION])
+        self.programs = dict(cfgparser[TrexConfig.PROGRAMS_SECTION])
 
 
 class TrexAuthMgr(object):
@@ -125,6 +125,8 @@ class TrexAuthMgr(object):
         return True
 
     def authorized(self, username, program):
+        if not username in self.config.users:
+            return False
         if not program in self.config.programs:
             return False
         if not program in self.config.users[username]['programs']:
