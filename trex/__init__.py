@@ -60,11 +60,11 @@ class TrexExecHandler(Thread):
         self.msg = msg
         Thread.__init__(self)
                 
-    def run(self):
+    def run(self): 
         if self.authmgr.authenticated(self.msg.username, self.msg.password) \
         and self.authmgr.authorized(self.msg.username, self.msg.program):
             logging.info("executing {}".format(self.msg.program))
-            call_args = [self.msg.program]
+            call_args = [self.msg.program] + self.msg.args
             try:
                 subprocess.call(call_args, stdout=subprocess.DEVNULL,
                                 stderr=subprocess.DEVNULL)
@@ -100,15 +100,15 @@ class TrexMsg(object):
     """
     The message exchanged between client and server.
     """ 
-    def __init__(self, username, password, program):
+    def __init__(self, username, password, program, args):
         self.username = username
         self.password = password
         self.program = program
+        self.args = args
         
     def __repr__(self, *args, **kwargs):
-        return 'username={}, password={}, program={}'.format(self.username,
-                                                             self.password,
-                                                             self.program)
+        r = 'username={}, password={}, program={}, args={}'
+        return r.format(self.username, self.password, self.program, self.args)
 
 
 class TrexConfig(object):

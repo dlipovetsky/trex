@@ -14,6 +14,8 @@ from trex import TrexClient, TrexMsg
 
 if __name__ == '__main__':
     args = docopt(__doc__)
+    prog = args['<program>'].split(' ')[0]
+    prog_args = args['<program>'].split(' ')[1:]
+    msg = TrexMsg(args['<username>'], args['<password>'], prog, prog_args)
     trexClient = TrexClient(args['<ip>'], certfile=args['<certfile>'])
-    msg = TrexMsg(args['<username>'], args['<password>'], args['<program>'])
     trexClient.send(msg)
