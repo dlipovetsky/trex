@@ -22,7 +22,7 @@ For each user, add a username, salted password, and one or more  programs the us
 ### sample.config
 
 	[users]
-	bob=1234, cat, ls
+	bob=123, cat, ls
 	
 	[programs]
 	cat=/bin/cat
