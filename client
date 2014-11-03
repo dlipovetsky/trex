@@ -4,14 +4,16 @@
 Created on Nov 1, 2014
 @author: daniel
 
+Toy Remote EXecution Client Command-Line Interface
+
 Usage:
-    client --server <ip> --user <username> --password <password> --exec <program>
+    client --server <ip> --user <username> --password <password> --exec <program> [--ssl <certfile>]
 """
 from docopt import docopt
 from trex import TrexClient, TrexMsg
 
 if __name__ == '__main__':
     args = docopt(__doc__)
-    trexClient = TrexClient(args['<ip>'])
+    trexClient = TrexClient(args['<ip>'], certfile=args['<certfile>'])
     msg = TrexMsg(args['<username>'], args['<password>'], args['<program>'])
     trexClient.send(msg)

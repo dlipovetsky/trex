@@ -7,21 +7,28 @@ from configparser import ConfigParser
 import logging
 import pickle
 import socket
+import ssl
 import subprocess
 from threading import Thread
+from pip._vendor.requests.exceptions import SSLError
 
 
 class TrexServer(object):
     """
-    Document...
+    Accepts remote execution requests and dispatches thread to launch
+    the requested process. SSL enabled and required if both keyfile and
+    certfile provided.
     """       
     DEFAULT_HOST = '0.0.0.0'
     DEFAULT_PORT = 9999
 
-    def __init__(self, config, authmgr, host=DEFAULT_HOST, port=DEFAULT_PORT):
+    def __init__(self, config, authmgr, host=DEFAULT_HOST, port=DEFAULT_PORT,
+                 keyfile=None, certfile=None):
         self.server_addr = ((host, port))
         self.config = config
         self.authmgr = authmgr
+        self.keyfile = keyfile
+        self.certfile = certfile
       
     def serve_forever(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,11 +36,20 @@ class TrexServer(object):
         sock.listen(5)
         while True:
             conn, client_addr = sock.accept()
+            if self.keyfile and self.certfile:
+                try:
+                    conn = ssl.wrap_socket(conn, self.keyfile, self.certfile,
+                                           server_side=True,
+                                           ssl_version=ssl.PROTOCOL_SSLv3)
+                except ssl.SSLError as exc:
+                    logging.error("SSL error - {}".format(exc))
+                    continue
             data = conn.recv(4096)
             msg = pickle.loads(data)
             logging.info("{} - {}".format(client_addr, msg))
             execHandler = TrexExecHandler(self.config, self.authmgr, msg)
             execHandler.start()
+
 
 class TrexExecHandler(Thread):
     """
@@ -54,20 +70,27 @@ class TrexExecHandler(Thread):
                 subprocess.call(call_args, stdout=subprocess.DEVNULL,
                                 stderr=subprocess.DEVNULL)
             except OSError as exc:
-                logging.error("error executing {} - {}".format(self.msg.program,
+                logging.error("OS error - {}".format(self.msg.program,
                                                                exc))
+
 
 class TrexClient(object):
     """
-    Document...
+    Remote execution client. Sends requests. SSL enabled and required
+    if certfile provided.
     """       
     DEFAULT_PORT = 9999
 
-    def __init__(self, host, port=DEFAULT_PORT):
+    def __init__(self, host, port=DEFAULT_PORT, certfile=None):
         self.server_addr = ((host, port))
+        self.certfile = certfile
     
     def send(self, msg):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if self.certfile:
+            sock = ssl.wrap_socket(sock, ca_certs=self.certfile,
+                                   cert_reqs=ssl.CERT_REQUIRED,
+                                   ssl_version=ssl.PROTOCOL_SSLv3)
         sock.connect(self.server_addr)
         data = pickle.dumps(msg)
         sock.sendall(data)
@@ -113,7 +136,6 @@ class TrexAuthMgr(object):
     Authenticates users against stored passwords, authorizes user
     to execute programs.
     """
-    
     def __init__(self, config):
         self.config = config
         

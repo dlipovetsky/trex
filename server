@@ -4,8 +4,10 @@
 Created on Nov 1, 2014
 @author: daniel
 
+Toy Remote EXecution Server Command-Line Interface
+
 Usage:
-    server <config_file>
+    server <config_file> [--ssl <keyfile> <certfile>]
 """
 from configparser import ConfigParser
 import logging
@@ -28,5 +30,6 @@ if __name__ == '__main__':
     cfgparser.read(args['<config_file>'])
     config = TrexConfig(cfgparser)
     authmgr = TrexAuthMgr(config)
-    s = TrexServer(config, authmgr)
+    s = TrexServer(config, authmgr, keyfile=args['<keyfile>'],
+                   certfile=args['<certfile>'])
     s.serve_forever()
