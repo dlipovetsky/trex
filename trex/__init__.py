@@ -66,7 +66,7 @@ class TrexExecHandler(Thread):
         Thread.__init__(self)
                 
     def run(self): 
-        data = self.conn.recv()
+        data = self.conn.recv(4096)
         msg = pickle.loads(data)
         logging.info("{} - {}".format(self.client_addr, msg))
         try:
@@ -113,10 +113,10 @@ class TrexClient(object):
             sock.connect(self.server_addr)
             data = pickle.dumps(msg)
             sock.sendall(data)
-            reply = sock.recv()
+            reply = sock.recv(4096)
             while reply:
                 print(reply.decode())
-                reply = sock.recv()
+                reply = sock.recv(4096)
         finally:
             sock.shutdown(SHUT_RDWR)
             sock.close()
