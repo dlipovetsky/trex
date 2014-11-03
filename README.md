@@ -8,7 +8,7 @@ program on the server. The standard output is returned to the client.
 
 Prerequisites: python3, virtualenv, pip
 
-	$ git clone ...
+	$ git clone https://github.com/gatoruso/trex/
 	$ virtualenv .venv -p python3
 	$ source .venv/bin/activate
 	$ pip install -r requirements.txt
