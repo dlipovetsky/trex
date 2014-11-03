@@ -161,16 +161,22 @@ class TrexAuthMgr(object):
         
     def authenticated(self, username, password):
         if not username in self.config.users:
+            logging.info("user {} not found".format(username))
             return False
         if not self.config.users[username]['password'] == password:
+            logging.info("user {} not authenticated".format(username))
             return False
         return True
 
     def authorized(self, username, program):
         if not username in self.config.users:
+            logging.info("user {} not found".format(username))
             return False
         if not program in self.config.programs:
+            logging.info("program {} not found".format(program))
             return False
         if not program in self.config.users[username]['programs']:
+            logging.info("user {} not authorized to run {}" \
+                         .format(username, program))
             return False
         return True
