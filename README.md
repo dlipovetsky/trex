@@ -45,11 +45,11 @@ If you want to start in SSL mode, pass in the key and certificate file paths:
 ## Client
 
 	$ source .venv/bin/activate
-	$ ./client --server 127.0.0.1 --user bob --password 123 --exec ls
+	$ ./client --server 127.0.0.1 --user bob --password 123 --exec 'ls -la /etc'
 
 If you want to communicate with a server running in SSL mode, pass in the certificate file path:
 
-	$ ./client --server 127.0.0.1 --user bob --password 123 --exec ls --ssl ssl/server.crt
+	$ ./client --server 127.0.0.1 --user bob --password 123 --exec 'ls -la /etc' --ssl ssl/server.crt
 
 # Known Issues
 
