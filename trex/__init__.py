@@ -71,17 +71,22 @@ class TrexExecHandler(Thread):
         logging.info("{} - {}".format(self.client_addr, msg))
         try:
             if not self.authmgr.authenticated(msg.username, msg.password):
+                self.conn.send("authentication error".encode())
                 return
             if not self.authmgr.authorized(msg.username, msg.program):
+                self.conn.send("authorization error".encode())
                 return
             logging.info("executing {}".format(msg.program))
             call_args = [msg.program] + msg.args
+            reply = self.conn.makefile('w', buffering=None)
             reply = subprocess.check_output(call_args, stderr=subprocess.STDOUT)
             self.conn.send(reply)
         except OSError as exc:
             logging.error("OS error - {}".format(msg.program, exc))
+            self.conn.send(str(exc).encode())
         except subprocess.CalledProcessError as exc:
             logging.error("process error - {}".format(msg.program, exc))
+            self.conn.send(str(exc).encode())
         finally:
             self.conn.shutdown(SHUT_RDWR)
             self.conn.close()
