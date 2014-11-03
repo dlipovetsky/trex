@@ -1,7 +1,8 @@
 trex - Toy Remote EXecution
 ===========================
 
-A toy remote execution service.
+A toy remote execution service. Authenticated users can run an authorized
+program on the server. The standard output is returned to the client.
 
 Deploying 
 ---------
