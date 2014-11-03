@@ -10,6 +10,7 @@ import socket
 import ssl
 import subprocess
 from threading import Thread
+from _socket import SHUT_RDWR
 
 
 class TrexServer(object):
@@ -33,44 +34,57 @@ class TrexServer(object):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(self.server_addr)
         sock.listen(5)
-        while True:
-            conn, client_addr = sock.accept()
-            if self.keyfile and self.certfile:
-                try:
-                    conn = ssl.wrap_socket(conn, self.keyfile, self.certfile,
-                                           server_side=True,
-                                           ssl_version=ssl.PROTOCOL_SSLv3)
-                except ssl.SSLError as exc:
-                    logging.error("SSL error - {}".format(exc))
-                    continue
-            data = conn.recv(4096)
-            msg = pickle.loads(data)
-            logging.info("{} - {}".format(client_addr, msg))
-            execHandler = TrexExecHandler(self.config, self.authmgr, msg)
-            execHandler.start()
+        try:
+            while True:
+                conn, client_addr = sock.accept()
+                if self.keyfile and self.certfile:
+                    try:
+                        conn = ssl.wrap_socket(conn, self.keyfile,
+                                               self.certfile,
+                                               server_side=True,
+                                               ssl_version=ssl.PROTOCOL_SSLv3)
+                    except ssl.SSLError as exc:
+                        logging.error("SSL error - {}".format(exc))
+                        continue
+                execHandler = TrexExecHandler(self.config, self.authmgr,
+                                              client_addr, conn)
+                execHandler.start()
+        finally:
+            sock.shutdown(SHUT_RDWR)
+            sock.close()
 
 
 class TrexExecHandler(Thread):
     """
     Handles a remote execution request.
     """
-    def __init__(self, config, authmgr, msg):
+    def __init__(self, config, authmgr, client_addr, conn):
         self.config = config
         self.authmgr = authmgr
-        self.msg = msg
+        self.client_addr = client_addr
+        self.conn = conn
         Thread.__init__(self)
                 
     def run(self): 
-        if self.authmgr.authenticated(self.msg.username, self.msg.password) \
-        and self.authmgr.authorized(self.msg.username, self.msg.program):
-            logging.info("executing {}".format(self.msg.program))
-            call_args = [self.msg.program] + self.msg.args
-            try:
-                subprocess.call(call_args, stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL)
-            except OSError as exc:
-                logging.error("OS error - {}".format(self.msg.program,
-                                                               exc))
+        data = self.conn.recv()
+        msg = pickle.loads(data)
+        logging.info("{} - {}".format(self.client_addr, msg))
+        try:
+            if not self.authmgr.authenticated(msg.username, msg.password):
+                return
+            if not self.authmgr.authorized(msg.username, msg.program):
+                return
+            logging.info("executing {}".format(msg.program))
+            call_args = [msg.program] + msg.args
+            reply = subprocess.check_output(call_args, stderr=subprocess.STDOUT)
+            self.conn.send(reply)
+        except OSError as exc:
+            logging.error("OS error - {}".format(msg.program, exc))
+        except subprocess.CalledProcessError as exc:
+            logging.error("process error - {}".format(msg.program, exc))
+        finally:
+            self.conn.shutdown(SHUT_RDWR)
+            self.conn.close()
 
 
 class TrexClient(object):
@@ -85,15 +99,22 @@ class TrexClient(object):
         self.certfile = certfile
     
     def send(self, msg):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if self.certfile:
-            sock = ssl.wrap_socket(sock, ca_certs=self.certfile,
-                                   cert_reqs=ssl.CERT_REQUIRED,
-                                   ssl_version=ssl.PROTOCOL_SSLv3)
-        sock.connect(self.server_addr)
-        data = pickle.dumps(msg)
-        sock.sendall(data)
-        sock.close()
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            if self.certfile:
+                sock = ssl.wrap_socket(sock, ca_certs=self.certfile,
+                                       cert_reqs=ssl.CERT_REQUIRED,
+                                       ssl_version=ssl.PROTOCOL_SSLv3)
+            sock.connect(self.server_addr)
+            data = pickle.dumps(msg)
+            sock.sendall(data)
+            reply = sock.recv()
+            while reply:
+                print(reply.decode())
+                reply = sock.recv()
+        finally:
+            sock.shutdown(SHUT_RDWR)
+            sock.close()
 
 
 class TrexMsg(object):
