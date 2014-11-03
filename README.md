@@ -51,6 +51,13 @@ If you want to communicate with a server running in SSL mode, pass in the certif
 
 	$ ./client --server 127.0.0.1 --user bob --password 123 --exec ls --ssl ssl/server.crt
 
+# Known Issues
+
+1. The passwords stored in the config file are stored in cleartext in this release. Instead, the hash of each password (along with a random salt) should be stored. 
+
+2. The SSL socket wrapper fails to work as expected using python's standard mechanism for using a socket as a file handle, e.g. to redirect stdout to the socket. Streaming stdout to the client does not work in this release.
+
+
 #SSL
 Normally, the client communicates with the server in cleartext. Use the SSL option to encrypt communications. The following assumes that you will be using a self-signed certificate. In order for the SSL protocol to work, you must make available (1) a private key to the server, and (2) a certificate to  to both the server and client. For more information, see the following [tutorial](https://www.digitalocean.com/community/tutorials/how-to-create-a-ssl-certificate-on-apache-on-arch-linux).
 
