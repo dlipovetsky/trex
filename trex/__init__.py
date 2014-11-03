@@ -10,7 +10,6 @@ import socket
 import ssl
 import subprocess
 from threading import Thread
-from pip._vendor.requests.exceptions import SSLError
 
 
 class TrexServer(object):
